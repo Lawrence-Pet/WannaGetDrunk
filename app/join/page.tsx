@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+export default function Join() { const [code, setCode] = useState(''); const router = useRouter(); return <main className="narrow centered"><a href="/" className="brand">✦ WANNA GET DRUNK</a><div className="panel join-panel"><div className="eyebrow">PLAYER ENTRANCE</div><h1>Got a code?</h1><p>Enter the six character code on the host screen.</p><form onSubmit={e => { e.preventDefault(); if (code.length === 6) router.push(`/game/${code.toUpperCase()}`); }}><input className="code-input" autoFocus maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/[^a-z0-9]/gi, '').toUpperCase())} placeholder="ABC123" aria-label="Game code"/><button className="btn primary wide" disabled={code.length !== 6}>Join game →</button></form></div></main>; }

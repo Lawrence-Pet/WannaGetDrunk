@@ -1,0 +1,1 @@
+ALTER TABLE "GameTemplate" ADD COLUMN "archived" BOOLEAN NOT NULL DEFAULT false;

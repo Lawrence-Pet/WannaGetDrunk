@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+
+model GameTemplate {
+  id String @id @default(cuid())
+  name String
+  description String @default("")
+  teamMode Boolean @default(false)
+  maxTeams Int?
+  autoActivateBuzzer Boolean @default(false)
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  questions Question[]
+  sessions GameSession[]
+}
+model Question {
+  id String @id @default(cuid())
+  gameTemplateId String
+  gameTemplate GameTemplate @relation(fields: [gameTemplateId], references: [id], onDelete: Cascade)
+  text String
+  displayOrder Int
+  countdownSeconds Int @default(10)
+  answers Answer[]
+  attempts QuestionAttempt[]
+  scoreEvents ScoreEvent[]
+}
+model Answer {
+  id String @id @default(cuid())
+  questionId String
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text String
+  displayOrder Int
+  isCorrect Boolean @default(false)
+}
+model GameSession {
+  id String @id @default(cuid())
+  gameTemplateId String
+  gameTemplate GameTemplate @relation(fields: [gameTemplateId], references: [id])
+  sessionCode String @unique
+  hostTokenHash String
+  status String @default("LOBBY")
+  currentQuestionIndex Int @default(-1)
+  phase String @default("LOBBY")
+  eliminatedPlayerIds String @default("[]")
+  eliminatedAnswerIds String @default("[]")
+  selectedPlayerId String?
+  deadline DateTime?
+  pausedPhase String?
+  result String?
+  createdAt DateTime @default(now())
+  startedAt DateTime?
+  endedAt DateTime?
+  players Player[]
+  teams Team[]
+  attempts QuestionAttempt[]
+  scoreEvents ScoreEvent[]
+}
+model Player {
+  id String @id @default(cuid())
+  gameSessionId String
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  displayName String
+  nameKey String
+  teamId String?
+  team Team? @relation(fields: [teamId], references: [id])
+  reconnectTokenHash String @unique
+  connected Boolean @default(false)
+  joinedAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  attempts QuestionAttempt[]
+  scoreEvents ScoreEvent[]
+  @@unique([gameSessionId, nameKey])
+}
+model Team {
+  id String @id @default(cuid())
+  gameSessionId String
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  name String
+  nameKey String
+  color String
+  createdAt DateTime @default(now())
+  players Player[]
+  @@unique([gameSessionId, nameKey])
+}
+model QuestionAttempt {
+  id String @id @default(cuid())
+  gameSessionId String
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  questionId String
+  question Question @relation(fields: [questionId], references: [id])
+  playerId String
+  player Player @relation(fields: [playerId], references: [id])
+  selectedAnswerId String?
+  isCorrect Boolean
+  timedOut Boolean @default(false)
+  pointsAwarded Int @default(0)
+  attemptedAt DateTime @default(now())
+  scoreEvent ScoreEvent?
+  @@unique([gameSessionId, questionId, playerId])
+}
+model ScoreEvent {
+  id String @id @default(cuid())
+  gameSessionId String
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  playerId String
+  player Player @relation(fields: [playerId], references: [id])
+  questionId String
+  question Question @relation(fields: [questionId], references: [id])
+  questionAttemptId String @unique
+  questionAttempt QuestionAttempt @relation(fields: [questionAttemptId], references: [id])
+  points Int
+  createdAt DateTime @default(now())
+}
